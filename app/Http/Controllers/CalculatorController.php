@@ -2,36 +2,69 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Calculation;
+use http\Env\Response;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use function Laravel\Prompts\error;
 
 class CalculatorController extends Controller
 {
     public function calculate(Request $request)
     {
+        $expression=$request->input('expression');
+        $firstExpression='';
+        $operator='';
+        $secondExpression='';
+        $indicator=false;
+        $operatorsSet = [
+            "+" => true,
+            "-" => true,
+            "*" => true,
+            "/" => true
+        ];
 
-        $num1 = $request->input('num1');
-        $num2 = $request->input('num2');
-        $operator = $request->input('operator');
-
-        if ($num1 === null || $num1 === '' || $num2 === null || $num2 === '' || $operator === null) {
-           return response()->json(['error'=>'Please enter all the required fields'],400);
-       }
-
-        if($operator=='add'){
-            $result = $num1 + $num2;
-        }
-        else if($operator=='subtract'){
-            $result = $num1 - $num2;
-        }
-        else if($operator=='divide'){
-            if($num2==0){
-                return response()->json(['error' => 'Cannot divide by zero'], 400);
+        for ($i = 0; $i < strlen($expression); $i++) {
+            if (isset($operatorsSet[$expression[$i]])) {
+                $operator = $expression[$i];
+                $indicator = true;
+                continue;
             }
-            $result = $num1 / $num2;
+            if (!$indicator) {
+                $firstExpression .= $expression[$i];
+            }
+            else {
+                $secondExpression .= $expression[$i];
+            }
         }
-        else{
-            $result = $num1 * $num2;
+
+        if($firstExpression==='' || $secondExpression===''){
+            return response()->json(['error'=>'please write valid expression'],400);
         }
-        return response()->json(['result' => $result]);
+
+
+        $firstNumber = (int)$firstExpression;
+        $secondNumber = (int)$secondExpression;
+        $result=0;
+
+
+        if($operator==='+'){
+            $result=$firstNumber+$secondNumber;
+        }
+        if($operator==='-') {
+            $result=$firstNumber-$secondNumber;
+        }
+        if($operator==='*') {
+            $result=$firstNumber*$secondNumber;
+        }
+        if($operator==='/') {
+            if($secondNumber===0){
+                return response()->json(['error'=>'you cant divide number by zero'],400);
+            }
+            $result=$firstNumber/$secondNumber;
+        }
+
+        Calculation::create(['expression'=>$request->expression,'result'=>$result]);
+        return response()->json(['result'=>$result]);
     }
 }
