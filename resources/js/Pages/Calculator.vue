@@ -81,7 +81,7 @@ export default {
                 this.errorMessage=null;
             }
             catch (error){
-                this.result=null;
+                this.result='';
                 this.errorMessage=error.response?.data?.error || "an error occurred";
             }
         }
