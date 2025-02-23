@@ -2,7 +2,7 @@
     <h1 class ="title">Not so simple calculator</h1>
     <div class="calculator">
         <input type="text" class="result"
-               :value="result" readonly />
+               :value="form.expression" readonly />
         <div class="buttons">
             <button class="number" @click="handleClick('7')">7</button>
             <button class="number" @click="handleClick('8')">8</button>
@@ -19,7 +19,7 @@
             <button class="number" @click="handleClick('3')">3</button>
             <button class="operator" @click="operatorClick('-')">-</button>
 
-            <button class="clear" @click="clearClick('C')">C</button>
+            <button class="clear" @click="clearClick()">C</button>
             <button class="number" @click="handleClick('0')">0</button>
             <button class="equal" @click="calculateResult()">=</button>
             <button class="operator" @click="operatorClick('+')">+</button>
@@ -27,65 +27,73 @@
 
     </div>
 
-    <div v-if="errorMessage" class="error-message">
-        <p>{{ errorMessage }}</p>
+    <div v-if="form.errorMessage" class="error-message">
+        <p>{{ form.errorMessage }}</p>
     </div>
+
+
 </template>
 
-<script>
-import axios from 'axios';
+<script setup>
+import { useForm } from '@inertiajs/vue3';
 
-export default {
-    data() {
-        return {
-            result: '',
-            errorMessage: null,
-            calculated : false
-        };
-    },
-    methods: {
-        handleClick(val){
-            if(this.calculated){
-                this.result = val;
-                this.calculated = false;
-            }
-            else {
-                this.result += val;
-            }
-        },
+const form = useForm({
+    expression: '',
+    calculated: false,
+    errorMessage: null
+});
 
-        operatorClick(operator){
-            let lastchar=this.result[this.result.length-1];
-            if(lastchar==='+' || lastchar==='-' || lastchar==='*' || lastchar==='/' ){
-                this.result=this.result.slice(0,-1);
-            }
-            this.result+=operator;
-            this.calculated=false;
-        },
 
-        clearClick(){
-            if(this.calculated){
-                this.result='';
-                this.calculated=false;
-            }
-            else {
-                this.result = this.result.slice(0, -1);
-            }
-        },
-
-        async calculateResult(){
-            try{
-                const response=await axios.post('calculate', {expression: this.result});
-                this.result=response.data.result;
-                this.calculated=true;
-                this.errorMessage=null;
-            }
-            catch (error){
-                this.result=null;
-                this.errorMessage=error.response?.data?.error || "an error occurred";
-            }
-        }
+const handleClick = (val) => {
+    if (form.calculated) {
+        form.expression = val;
+        form.calculated = false;
+    } else {
+        form.expression += val;
     }
+};
+
+
+const operatorClick = (operator) => {
+    let lastchar = form.expression[form.expression.length - 1];
+    if (lastchar==='+' || lastchar==='-' || lastchar==='*' || lastchar==='/' ) {
+        form.expression = form.expression.slice(0, -1);
+    }
+    form.expression += operator;
+    form.calculated = false;
+};
+
+
+const clearClick = () => {
+    if (form.calculated) {
+        form.expression = '';
+        form.calculated = false;
+    } else {
+        form.expression = form.expression.slice(0, -1);
+    }
+};
+
+const calculateResult = () => {
+    form.post('calculate', {
+        data: {
+            expression : form.expression
+        },
+        onSuccess: (page) => {
+            if(page.props.errorMessage!=null){
+                form.errorMessage=page.props.errorMessage;
+                form.expression=page.props.result;
+                form.calculated=false;
+            }
+            else{
+                form.expression = page.props.result;
+                form.calculated = true;
+                form.errorMessage = null;
+            }
+        },
+        onError: (errors) => {
+            form.errorMessage = errors.errorMessage || 'an error occurred during calculation';
+        }
+    });
 };
 </script>
 
