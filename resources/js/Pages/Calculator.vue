@@ -37,10 +37,26 @@
 <script setup>
 import { useForm } from '@inertiajs/vue3';
 
+
+const props = defineProps({
+    expression: {
+        type: String,
+        default: ''
+    },
+    errorMessage: {
+        type: String,
+        default: null
+    },
+    result : {
+        type :String,
+        default:''
+    }
+});
+
 const form = useForm({
-    expression: '',
+    expression: props.expression,
     calculated: false,
-    errorMessage: null
+    errorMessage: props.errorMessage
 });
 
 

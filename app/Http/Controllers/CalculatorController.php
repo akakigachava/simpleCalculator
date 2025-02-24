@@ -65,10 +65,15 @@ class CalculatorController extends Controller
                 $result = $firstNumber / $secondNumber;
             }
             Calculation::create(['expression' => $request->expression, 'result' => $result]);
-            return Inertia::render('Calculator', ['result' => $result]);
+            return Inertia::render('Calculator', [
+                'expression' => $expression,
+                'result' => $result,
+                'errorMessage' => null
+            ]);
 
         } catch (\Exception $e) {
             return Inertia::render('Calculator', [
+                'expression' => $expression,
                 'result' => $expression,
                 'errorMessage' => $e->getMessage()
             ]);
